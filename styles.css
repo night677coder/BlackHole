@@ -1,0 +1,713 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Video Player Overlay */
+.video-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: none; /* toggled to flex in JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+}
+
+.video-container {
+    position: relative;
+    width: 90vw;
+    max-width: 1200px;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#videoElement {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+}
+
+/* Global Full-Screen Setup */
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Prevent body scroll */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: black;
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Full-Screen Application States */
+body.dashboard-active {
+    overflow: hidden;
+}
+
+body.dashboard-active .dashboard {
+    display: flex;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hide other sections when dashboard is active */
+body.dashboard-active #welcomeDialog,
+body.dashboard-active #authSection {
+    display: none !important;
+}
+/* Show dashboard when active */
+body.dashboard-active #dashboard {
+    display: flex !important;
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.dialog-overlay::before,
+.dialog-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.dialog-overlay::before {
+    background: radial-gradient(circle at 30% 20%, rgba(229, 9, 20, 0.2), transparent 55%),
+                radial-gradient(circle at 70% 25%, rgba(193, 17, 25, 0.18), transparent 60%),
+                radial-gradient(circle at center, rgba(34, 34, 34, 0.8), rgba(0, 0, 0, 0.95));
+    opacity: 1;
+}
+
+.dialog-overlay::after {
+    background: linear-gradient(160deg, rgba(0, 0, 0, 0.9), rgba(10, 10, 10, 0.95));
+}
+
+.dialog-content {
+    position: relative;
+    padding: 3rem;
+    border-radius: 18px;
+    text-align: center;
+    max-width: 90%;
+    width: 420px;
+    color: #141414;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(229, 9, 20, 0.15);
+    backdrop-filter: blur(6px);
+    background: #ffffff;
+}
+
+.dialog-content::before,
+.dialog-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+}
+
+.dialog-content::before {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 245, 0.75));
+}
+
+.dialog-content::after {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 248, 248, 0.85));
+    z-index: -1;
+}
+
+.dialog-content h1 {
+    font-size: 2.6rem;
+    margin-bottom: 1rem;
+    color: #e50914;
+}
+
+.dialog-content p {
+    font-size: 1.15rem;
+    color: rgba(50, 50, 50, 0.85);
+    margin-bottom: 2rem;
+}
+
+.btn-primary {
+    background: #e50914;
+    color: #ffffff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #333333;
+    color: #e5e5e5;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #444444;
+}
+
+.btn-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #888;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.btn-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.btn-fullscreen {
+    position: absolute;
+    top: 15px;
+    right: 70px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #e5e5e5;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.btn-fullscreen:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Authentication Styles */
+.auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.auth-container::before,
+.auth-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.auth-container::before {
+    background: radial-gradient(circle at 30% 20%, rgba(229, 9, 20, 0.12), transparent 55%),
+                radial-gradient(circle at 70% 25%, rgba(193, 17, 25, 0.1), transparent 60%),
+                radial-gradient(circle at center, rgba(20, 20, 20, 0.85), rgba(0, 0, 0, 0.95));
+    opacity: 1;
+}
+
+.auth-container::after {
+    background: radial-gradient(circle at center, rgba(4, 6, 14, 0.85), rgba(2, 3, 13, 0.95));
+}
+
+.auth-form {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 3.25rem 3rem;
+    border-radius: 18px;
+    width: auto;
+    max-width: 420px;
+    margin: 0;
+    box-sizing: border-box;
+    color: #141414;
+    overflow: hidden;
+    border: 1px solid rgba(229, 9, 20, 0.2);
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(6px);
+    background: #ffffff;
+}
+
+.auth-form::before,
+.auth-form::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+}
+
+.auth-form::before {
+    background: none;
+}
+
+.auth-form::after {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 245, 0.9));
+    z-index: -1;
+}
+
+.auth-form.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-form h2 {
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #e50914;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: rgba(30, 30, 30, 0.9);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(229, 9, 20, 0.35);
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+    background: #ffffff;
+    color: #141414;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: rgba(229, 9, 20, 0.75);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+    background: #ffffff;
+}
+
+.form-group input::placeholder {
+    color: rgba(120, 120, 120, 0.6);
+}
+
+
+.auth-toggle {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: rgba(60, 60, 60, 0.78);
+}
+
+.auth-toggle span {
+    color: #e50914;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.auth-toggle span:hover {
+    text-decoration: underline;
+}
+
+/* Make auth buttons full width */
+.auth-form .btn-primary {
+    width: 100%;
+}
+
+/* Dashboard Styles */
+.dashboard {
+    width: 100%;
+    max-width: none; /* span full width, no left/right margin */
+    background: #141414;
+    border-radius: 15px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+    min-height: 100vh; /* Ensure minimum height */
+    --header-height: 72px; /* used to offset main content when header is fixed */
+    padding-top: calc(var(--header-height) + 16px); /* extra clearance below header */
+}
+
+/* Footer */
+.footer {
+    background: #0d0d0d;
+    color: #e5e5e5;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto;
+    flex-shrink: 0;
+    width: 100%;
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+
+.dashboard-header {
+    background: linear-gradient(135deg, #050505 0%, #121212 100%);
+    color: #e5e5e5;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0; /* Fixed height, never shrinks */
+    width: 100%;
+    position: fixed; /* keep header always visible */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    height: var(--header-height);
+    box-sizing: border-box;
+}
+
+.dashboard-header h1 {
+    color: #e50914;
+    font-size: 3em;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    font-size: 1.8rem;
+    margin: 0; /* remove default spacing */
+    line-height: 1; /* tighter vertical alignment */
+    flex: 1; /* take remaining space */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* prevent overflow on small screens */
+}
+
+.dashboard-main {
+    flex: 1; /* Takes all remaining space */
+    padding: 2rem; /* simplified: header offset handled by .dashboard */
+    overflow-y: auto; /* Scroll only main content */
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0; /* Allow flex item to shrink below content size */
+}
+
+/* Upload Section */
+.upload-section {
+    margin-top: 0.5rem;
+    margin-bottom: 3rem;
+    flex-shrink: 0; /* Prevent upload section from shrinking */
+}
+
+.upload-section h2 {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: #f5f5f5; /* lighter for dark background */
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.upload-area {
+    border: 3px dashed rgba(229, 9, 20, 0.5);
+    border-radius: 10px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #1f1f1f;
+    min-height: 200px; /* Ensure minimum height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area:hover {
+    border-color: rgba(229, 9, 20, 0.8);
+    background: #262626;
+}
+
+.upload-area p {
+    color: #e5e5e5;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Files Section */
+.files-section {
+    flex: 1; /* Take remaining space in main content */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow flex shrinking */
+}
+
+/* Files header: place search on the left and filter on the right */
+.files-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    justify-content: space-between; /* push ends apart */
+}
+
+.search-input {
+    flex: 1 1 auto; /* left side, takes remaining space */
+    min-width: 0;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid #333333;
+    border-radius: 8px;
+    background: #1b1b1b;
+    color: #f5f5f5;
+}
+
+.filter-select {
+    flex: 0 0 auto; /* right side, intrinsic width */
+    padding: 0.6rem 0.8rem;
+    border: 2px solid #333333;
+    border-radius: 8px;
+    background: #1b1b1b;
+    color: #f5f5f5;
+    min-width: 160px; /* ensure visible width */
+}
+
+.files-section h2 {
+    margin-bottom: 1.5rem;
+    color: #f5f5f5;
+    flex-shrink: 0; /* Keep header from shrinking */
+}
+
+.files-list {
+    flex: 1; /* Take remaining space for file list */
+    display: flex; /* switch to list layout */
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto; /* Scroll file list if needed */
+    min-height: 200px; /* Ensure minimum height */
+}
+
+/* Center empty state to full available space */
+.files-list.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.files-list.empty .no-files {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+    color: #bfbfbf;
+}
+
+.file-item {
+    background: #1b1b1b;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* name left, actions right */
+    transition: background-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    min-width: 0; /* allow content to shrink for ellipsis */
+    width: 100%;
+}
+
+.file-item:hover {
+    background: #212121;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.file-info { display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 1 1 auto; }
+
+.file-details { display: flex; flex-direction: column; min-width: 0; }
+
+.file-actions { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; }
+
+.file-info h4 {
+    margin-bottom: 0.5rem;
+    color: #f5f5f5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-info p {
+    font-size: 0.9rem;
+    color: #b0b0b0;
+}
+
+.file-actions button {
+    background: #e50914;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+    transition: background-color 0.2s;
+}
+.file-actions button:hover {
+    background: #f40612;
+}
+
+/* Dialog Styles */
+.dialog-content h1,
+.dialog-content p,
+.dialog-content .btn-primary {
+    position: relative;
+    z-index: 1;
+}
+
+/* Footer */
+.footer {
+    background: #2d3748;
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto; /* Push footer to bottom */
+    flex-shrink: 0; /* Prevent footer from shrinking */
+    width: 100%;
+    position: relative;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.footer p {
+    margin: 0.5rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem; /* Reduced padding for mobile */
+    }
+
+    .no-files {
+        text-align: center;
+        color: #bfbfbf;
+        font-style: italic;
+        padding: 2rem;
+        border: 2px dashed #333333;
+        border-radius: 8px;
+        background: #1b1b1b;
+        min-height: 150px; /* Ensure minimum height even when empty */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dashboard {
+        height: 100vh; /* Full height on mobile too */
+        margin: 0;
+        border-radius: 10px; /* Slightly less rounded on mobile */
+    }
+
+    .dashboard { --header-height: 64px; }
+
+    .dashboard-header {
+        padding: 0 1rem; /* keep predictable height for fixed header */
+    }
+
+    .dashboard-main {
+        padding: 1rem; /* header offset handled by .dashboard */
+        min-height: calc(100vh - var(--header-height)); /* Ensure minimum height for content */
+    }
+
+    .upload-area {
+        padding: 2rem;
+        min-height: 150px; /* Smaller minimum height on mobile */
+    }
+
+    .files-list {
+        min-height: 150px; /* Smaller minimum height on mobile */
+        max-height: calc(100vh - 300px); /* Limit height to prevent overflow */
+    }
+
+    /* Keep layout but reduce gaps on mobile */
+    .search-container { gap: 0.5rem; }
+    .filter-select { max-width: 45%; }
+}

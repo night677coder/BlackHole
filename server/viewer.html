@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en" oncontextmenu="return false">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BLACKHOLE Share Viewer</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 1rem; background: #f7fafc; color: #1a202c; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; max-width: 900px; margin: 0 auto; box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+    .actions { margin-top: 1rem; display: flex; gap: .5rem; }
+    button { padding: .6rem 1rem; border-radius: 6px; border: 1px solid #cbd5e0; background: #edf2f7; cursor: pointer; }
+    button:hover { background: #e2e8f0; }
+    .preview { margin-top: 1rem; }
+    video, img { max-width: 100%; height: auto; border-radius: 8px; }
+    .muted { color: #718096; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+  async function run() {
+    try {
+      const pathId = location.pathname.split('/').pop();
+      const hash = new URLSearchParams(location.hash.slice(1));
+      const kB64 = hash.get('k');
+      const name = decodeURIComponent(hash.get('n') || 'file');
+      const type = decodeURIComponent(hash.get('t') || 'application/octet-stream');
+      const mode = (hash.get('m') || '').toLowerCase(); // 'blob' to force full decrypt
+      if (!pathId || !kB64) throw new Error('Missing id or key');
+
+      const app = document.getElementById('app');
+      const statusEl = document.createElement('div');
+      statusEl.id = 'status';
+      statusEl.className = 'muted';
+      const status = (msg) => (statusEl.textContent = msg || '');
+
+      async function fetchRange(start, end) {
+        const headers = { 'Range': `bytes=${start}-${end}` };
+        const res = await fetch(`/d/${pathId}`, { headers });
+        if (!(res.status === 206 || res.status === 200)) {
+          throw new Error(`Range fetch failed (${res.status})`);
+        }
+        return new Uint8Array(await res.arrayBuffer());
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = src; s.async = true; s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      function b64ToBytes(b64) {
+        if (typeof b64 !== 'string') throw new Error('Expected base64 string');
+        let s = b64.trim();
+        // Strip data URL prefix if present
+        const m = s.match(/^data:.*?;base64,(.*)$/);
+        if (m) s = m[1];
+        // Normalize URL-safe -> standard and remove whitespace
+        s = s.replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+        // Fix padding
+        const pad = s.length % 4;
+        if (pad === 1) throw new Error('Invalid base64 length');
+        if (pad) s += '='.repeat(4 - pad);
+        const bin = atob(s);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return arr;
+      }
+
+      async function decryptToBlob() {
+        status('Fetching header...');
+        const header = await fetchRange(0, 31);
+        const magic = new TextDecoder().decode(header.slice(0, 8));
+        const keyRaw = b64ToBytes(kB64);
+        const key = await crypto.subtle.importKey('raw', keyRaw, 'AES-GCM', false, ['decrypt']);
+
+        if (magic === 'BHSEG_v1') {
+          // Segmented format: 32-byte header + N segments of [12B IV][cipher(tag)]
+          const dv = new DataView(header.buffer, header.byteOffset, header.byteLength);
+          const chunkSize = dv.getUint32(8, true);
+          const totalLow = dv.getUint32(12, true);
+          const totalHigh = dv.getUint32(16, true);
+          const chunkCount = dv.getUint32(20, true);
+          const totalSize = (BigInt(totalHigh) << 32n) | BigInt(totalLow);
+
+          let offset = 32; // after header
+          const parts = [];
+          for (let i = 0; i < chunkCount; i++) {
+            status(`Decrypting segment ${i+1}/${chunkCount}...`);
+            const remaining = Number(totalSize - BigInt(i) * BigInt(chunkSize));
+            const plainLen = Math.min(chunkSize, remaining);
+            const segLen = 12 + plainLen + 16; // IV + cipher+tag
+            const start = offset;
+            const end = offset + segLen - 1;
+            const seg = await fetchRange(start, end);
+            const iv = seg.slice(0, 12);
+            const cipher = seg.slice(12);
+            const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+            parts.push(plain);
+            offset += segLen;
+          }
+          status('');
+          return new Blob(parts, { type });
+        } else {
+          // Legacy single-blob format: [12B IV][cipher]
+          status('Fetching...');
+          const combined = await (await fetch(`/d/${pathId}`)).arrayBuffer();
+          status('Decrypting...');
+          const u8 = new Uint8Array(combined);
+          const iv = u8.slice(0, 12);
+          const cipher = u8.slice(12);
+          const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+          status('');
+          return new Blob([plain], { type });
+        }
+      }
+
+      if (type.startsWith('video/')) {
+        // Minimal player-only UI with graceful fallback
+        document.body.style.background = '#0f172a';
+        document.body.style.margin = '0';
+        document.body.style.height = '100vh';
+        document.body.style.display = 'flex';
+        document.body.style.alignItems = 'center';
+        document.body.style.justifyContent = 'center';
+
+        // Attach a visible status overlay for progress/errors
+        // Reuse the existing statusEl created above
+        if (statusEl && !statusEl.isConnected) {
+          statusEl.style.position = 'fixed';
+          statusEl.style.top = '12px';
+          statusEl.style.left = '50%';
+          statusEl.style.transform = 'translateX(-50%)';
+          statusEl.style.background = 'rgba(17, 24, 39, 0.85)';
+          statusEl.style.color = '#e5e7eb';
+          statusEl.style.padding = '8px 12px';
+          statusEl.style.borderRadius = '8px';
+          statusEl.style.boxShadow = '0 8px 20px rgba(0,0,0,.35)';
+          statusEl.style.zIndex = '9999';
+          status('Preparing...');
+          document.body.appendChild(statusEl);
+        }
+
+        async function mseStreamPlay() {
+          // Try MSE progressive playback for segmented format
+          try {
+            status('Preparing player...');
+            // Peek header to decide if segmented
+            const header = await fetchRange(0, 31);
+            const magic = new TextDecoder().decode(header.slice(0, 8));
+            if (magic !== 'BHSEG_v1') return false; // not segmented -> let fallback run
+
+            const dv = new DataView(header.buffer, header.byteOffset, header.byteLength);
+            const chunkSize = dv.getUint32(8, true);
+            const totalLow = dv.getUint32(12, true);
+            const totalHigh = dv.getUint32(16, true);
+            const chunkCount = dv.getUint32(20, true);
+            const totalSize = (BigInt(totalHigh) << 32n) | BigInt(totalLow);
+
+            const keyRaw = b64ToBytes(kB64);
+            const key = await crypto.subtle.importKey('raw', keyRaw, 'AES-GCM', false, ['decrypt']);
+
+            const video = document.createElement('video');
+            video.controls = true;
+            video.autoplay = true;
+            video.style.maxWidth = '100%';
+            video.style.maxHeight = '100%';
+            app.appendChild(video);
+            let started = false;
+            const onStarted = () => { started = true; status(''); };
+            video.addEventListener('playing', onStarted, { once: true });
+            video.addEventListener('loadeddata', () => { if (!started) status('Buffering...'); });
+            // Safety timeout to fallback if playback doesn't start soon after some data
+            let timedOut = false;
+            const timeoutId = setTimeout(() => { if (!started) { timedOut = true; } }, 6000);
+
+            const ms = new MediaSource();
+            const objectUrl = URL.createObjectURL(ms);
+            video.src = objectUrl;
+
+            // Load mp4box.js for transmuxing to fMP4
+            await loadScript('https://unpkg.com/mp4box@0.5.4/dist/mp4box.all.min.js');
+            if (!('MP4Box' in window)) throw new Error('mp4box not available');
+
+            await new Promise((resolve) => ms.addEventListener('sourceopen', resolve, { once: true }));
+
+            // Create MP4Box file parser
+            const mp4boxfile = MP4Box.createFile();
+            mp4boxfile.onError = (e) => console.warn('mp4box error:', e);
+
+            // SourceBuffers and queues per track
+            const trackMap = new Map();
+            let ended = false;
+
+            function createSBForTrack(track) {
+              const codec = track.codec || (track.type === 'video' ? 'avc1.42E01E' : 'mp4a.40.2');
+              const mime = `video/mp4; codecs="${codec}"`;
+              if (!MediaSource.isTypeSupported(mime)) return null;
+              const sb = ms.addSourceBuffer(mime);
+              const q = [];
+              sb.addEventListener('updateend', () => {
+                if (q.length > 0 && !sb.updating) {
+                  const chunk = q.shift();
+                  sb.appendBuffer(chunk);
+                } else if (q.length === 0 && ended) {
+                  try { if (!ms.ended) ms.endOfStream(); } catch {}
+                }
+              });
+              trackMap.set(track.id, { sb, q, mime });
+              return sb;
+            }
+
+            mp4boxfile.onReady = (info) => {
+              // Create SBs for video and audio tracks
+              const videoTrack = info.tracks.find(t => t.video);
+              const audioTrack = info.tracks.find(t => t.audio);
+              const vSB = videoTrack ? createSBForTrack(videoTrack) : null;
+              const aSB = audioTrack ? createSBForTrack(audioTrack) : null;
+              // Configure segment options and initialize segmentation
+              if (videoTrack && vSB) mp4boxfile.setSegmentOptions(videoTrack.id, null, { nbSamples: 1000 });
+              if (audioTrack && aSB) mp4boxfile.setSegmentOptions(audioTrack.id, null, { nbSamples: 2000 });
+              const initSegs = mp4boxfile.initializeSegmentation();
+              if (initSegs) {
+                initSegs.forEach(s => {
+                  const entry = trackMap.get(s.id);
+                  if (entry) {
+                    if (!entry.sb.updating && entry.q.length === 0) entry.sb.appendBuffer(s.buffer);
+                    else entry.q.push(s.buffer);
+                  }
+                });
+              }
+              mp4boxfile.start();
+            };
+
+            mp4boxfile.onSegment = (id, user, buffer, sampleNum, isLast) => {
+              const entry = trackMap.get(id);
+              if (!entry) return;
+              if (!entry.sb.updating && entry.q.length === 0) entry.sb.appendBuffer(buffer);
+              else entry.q.push(buffer);
+              if (isLast) {
+                ended = true;
+              }
+            };
+
+            // Feed decrypted plaintext MP4 bytes into mp4box incrementally
+            let fileStart = 0;
+            let offset = 32; // data start after header
+            const warmSegments = Math.min(4, chunkCount);
+            for (let i = 0; i < chunkCount; i++) {
+              status(`Buffering ${i+1}/${chunkCount}...`);
+              const remaining = Number(totalSize - BigInt(i) * BigInt(chunkSize));
+              const plainLen = Math.min(chunkSize, remaining);
+              const segLen = 12 + plainLen + 16;
+              const seg = await fetchRange(offset, offset + segLen - 1);
+              const iv = seg.slice(0, 12);
+              const cipher = seg.slice(12);
+              const plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher));
+              const ab = plain.buffer;
+              ab.fileStart = fileStart; // mp4box API expects this property
+              mp4boxfile.appendBuffer(ab);
+              fileStart += plain.byteLength;
+              offset += segLen;
+              if (i + 1 === warmSegments) {
+                try { await video.play(); } catch {}
+              }
+            }
+            // Signal end of data
+            mp4boxfile.flush();
+            // If playback hasn't started by now, let caller fallback
+            clearTimeout(timeoutId);
+            if (!started || timedOut) {
+              status('Falling back...');
+              try { video.pause(); } catch {}
+              try { URL.revokeObjectURL(video.src); } catch {}
+            }
+            return started && !timedOut;
+          } catch (e) {
+            console.warn('MSE progressive path failed, falling back:', e);
+            return false;
+          }
+        }
+
+        try {
+          // Try progressive playback first unless forced to blob mode
+          let ok = false;
+          if (mode !== 'blob') {
+            ok = await mseStreamPlay();
+          } else {
+            status('Forcing full decrypt...');
+          }
+          if (!ok) {
+            // Fallback: full decrypt then play
+            status('Decrypting...');
+            const blob = await decryptToBlob();
+            status('');
+            const video = document.createElement('video');
+            video.controls = true;
+            video.autoplay = true;
+            video.style.maxWidth = '100%';
+            video.style.maxHeight = '100%';
+            const support = video.canPlayType(type || 'video/mp4');
+            video.onerror = () => {
+              const wrapper = document.createElement('div');
+              wrapper.style.color = '#e2e8f0';
+              wrapper.style.textAlign = 'center';
+              wrapper.style.maxWidth = '90%';
+              wrapper.style.lineHeight = '1.5';
+              wrapper.innerHTML = `No video with supported format and MIME type found.<br/>This browser may not support the video's codec.<br/><br/>`;
+              const btn = document.createElement('button');
+              btn.textContent = 'Download Video';
+              btn.style.padding = '.6rem 1rem';
+              btn.style.borderRadius = '6px';
+              btn.style.border = '1px solid #334155';
+              btn.style.background = '#1f2937';
+              btn.style.color = '#e5e7eb';
+              btn.onclick = () => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = name; a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 60_000);
+              };
+              wrapper.appendChild(btn);
+              app.innerHTML = '';
+              app.appendChild(wrapper);
+            };
+            video.src = URL.createObjectURL(blob);
+            app.appendChild(video);
+            if (support === '') {
+              // leave playback attempt; onerror will swap UI if it fails
+            }
+          }
+        } catch (e) {
+          status('Video playback failed: ' + (e?.message || e));
+        }
+      } else {
+        // Fallback to original card UI for non-video types
+        const card = document.createElement('div');
+        card.className = 'card';
+        const h = document.createElement('h1'); h.textContent = 'Share Viewer';
+        const p = document.createElement('p'); p.id = 'meta'; p.className = 'muted'; p.textContent = `${name} • ${type}`;
+        const actions = document.createElement('div'); actions.className = 'actions';
+        const dl = document.createElement('button'); dl.id = 'downloadBtn'; dl.textContent = 'Download';
+        const pv = document.createElement('button'); pv.id = 'previewBtn'; pv.textContent = 'Preview';
+        actions.append(dl, pv);
+        card.append(h, p, actions, statusEl, Object.assign(document.createElement('div'),{id:'preview',className:'preview'}));
+        app.appendChild(card);
+
+        document.getElementById('downloadBtn').onclick = async () => {
+          try { status('Decrypting...'); const blob = await decryptToBlob(); status(''); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),60_000);} catch(e){ status('Download failed: '+(e?.message||e)); }
+        };
+        document.getElementById('previewBtn').onclick = async () => {
+          try { status('Decrypting...'); const blob = await decryptToBlob(); status(''); const holder=document.getElementById('preview'); holder.innerHTML=''; if(type.startsWith('image/')){ const img=document.createElement('img'); img.src=URL.createObjectURL(blob); holder.appendChild(img);} else { holder.textContent='Preview not supported. Use Download.'; } } catch(e){ status('Preview failed: '+(e?.message||e)); }
+        };
+      }
+    } catch (e) {
+      const app = document.getElementById('app');
+      const err = document.createElement('div');
+      err.className = 'card';
+      err.textContent = 'Error: ' + (e?.message || e);
+      app.appendChild(err);
+    }
+  }
+  run();
+  </script>
+</body>
+</html>

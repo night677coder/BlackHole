@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" oncontextmenu="return false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACKHOLE - Debug Version</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .debug-button { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .debug-pass { background-color: #d4edda; color: #155724; }
+        .debug-fail { background-color: #f8d7da; color: #721c24; }
+        .debug-info { background-color: #d1ecf1; color: #0c5460; }
+        #debug-results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>BLACKHOLE Debug Console</h1>
+
+    <div class="debug-section debug-info">
+        <h3>Debug Instructions:</h3>
+        <p>1. Open the main index.html file in your browser</p>
+        <p>2. Open browser developer tools (F12) and go to Console tab</p>
+        <p>3. Click the "Enter" button on the welcome screen</p>
+        <p>4. Check the console for debug messages</p>
+        <p>5. If you see "Enter button clicked!" but no auth form, there might be a CSS issue</p>
+    </div>
+
+    <div class="debug-section">
+        <h3>Manual Tests:</h3>
+        <div class="debug-button" onclick="testElements()">Test HTML Elements</div>
+        <div class="debug-button" onclick="testEnterButton()">Test Enter Button</div>
+        <div class="debug-button" onclick="testAuthSection()">Test Auth Section</div>
+        <div class="debug-button" onclick="clearResults()">Clear Results</div>
+    </div>
+
+    <div id="debug-results"></div>
+
+    <script>
+        function logResult(message, type = 'info') {
+            const results = document.getElementById('debug-results');
+            const div = document.createElement('div');
+            div.className = `debug-section debug-${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function testElements() {
+            logResult('Testing HTML elements...', 'info');
+
+            const elements = [
+                { id: 'welcomeDialog', name: 'Welcome Dialog' },
+                { id: 'enterBtn', name: 'Enter Button' },
+                { id: 'authSection', name: 'Auth Section' },
+                { id: 'signinForm', name: 'Sign In Form' },
+                { id: 'signupForm', name: 'Sign Up Form' }
+            ];
+
+            elements.forEach(({ id, name }) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    logResult(`✅ ${name} found`, 'pass');
+                } else {
+                    logResult(`❌ ${name} not found`, 'fail');
+                }
+            });
+        }
+
+        function testEnterButton() {
+            logResult('Testing Enter button functionality...', 'info');
+
+            const enterBtn = document.getElementById('enterBtn');
+            if (enterBtn) {
+                logResult('✅ Enter button found, attempting click simulation', 'pass');
+                // Simulate the click
+                const event = new Event('click', { bubbles: true });
+                enterBtn.dispatchEvent(event);
+            } else {
+                logResult('❌ Enter button not found', 'fail');
+            }
+        }
+
+        function testAuthSection() {
+            logResult('Testing auth section visibility...', 'info');
+
+            const authSection = document.getElementById('authSection');
+            const welcomeDialog = document.getElementById('welcomeDialog');
+
+            if (authSection && welcomeDialog) {
+                logResult(`✅ Auth section visibility: ${getComputedStyle(authSection).display}`, 'pass');
+                logResult(`✅ Welcome dialog visibility: ${getComputedStyle(welcomeDialog).display}`, 'pass');
+
+                // Try to show auth section manually
+                welcomeDialog.style.display = 'none';
+                authSection.style.display = 'block';
+                logResult('✅ Manually set auth section to visible', 'pass');
+            } else {
+                logResult('❌ Required elements not found for auth section test', 'fail');
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('debug-results').innerHTML = '';
+            logResult('Debug results cleared', 'info');
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            logResult('Page loaded - running basic diagnostics...', 'info');
+            testElements();
+
+            // Check if we're in the main app or debug page
+            if (window.location.pathname.includes('index.html')) {
+                logResult('✅ Running in main application', 'pass');
+            } else {
+                logResult('ℹ️ Running in debug page - open index.html for full test', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

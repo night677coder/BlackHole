@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" oncontextmenu="return false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACKHOLE - Test Version</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-button { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .test-pass { background-color: #d4edda; color: #155724; }
+        .test-fail { background-color: #f8d7da; color: #721c24; }
+        .test-info { background-color: #d1ecf1; color: #0c5460; }
+        #test-results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>BLACKHOLE Application Test</h1>
+
+    <div class="test-section test-info">
+        <h3>Test Instructions:</h3>
+        <p>1. Open the main index.html file in your browser</p>
+        <p>2. Click the "Enter" button - should show authentication forms</p>
+        <p>3. Click "Sign Up" link - should show the signup form</p>
+        <p>4. Click "Sign In" link - should show the signin form</p>
+        <p>5. Check browser console for debug messages</p>
+    </div>
+
+    <div class="test-section">
+        <h3>Key Features to Test:</h3>
+        <div class="test-button" onclick="testEnterButton()">Test Enter Button</div>
+        <div class="test-button" onclick="testAuthToggle()">Test Auth Form Toggle</div>
+        <div class="test-button" onclick="testFormValidation()">Test Form Validation</div>
+        <div class="test-button" onclick="clearResults()">Clear Results</div>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script>
+        function logResult(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-section test-${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+
+        function testEnterButton() {
+            logResult('Testing Enter Button functionality...', 'info');
+
+            // Simulate clicking enter button
+            const enterBtn = document.getElementById('enterBtn');
+            if (enterBtn) {
+                enterBtn.click();
+                logResult('✅ Enter button clicked successfully', 'pass');
+            } else {
+                logResult('❌ Enter button not found', 'fail');
+            }
+        }
+
+        function testAuthToggle() {
+            logResult('Testing authentication form toggle...', 'info');
+
+            // Test signup link
+            const showSignup = document.getElementById('showSignup');
+            if (showSignup) {
+                showSignup.click();
+                logResult('✅ Sign Up link clicked', 'pass');
+            } else {
+                logResult('❌ Sign Up link not found', 'fail');
+            }
+
+            // Test signin link
+            setTimeout(() => {
+                const showSignin = document.getElementById('showSignin');
+                if (showSignin) {
+                    showSignin.click();
+                    logResult('✅ Sign In link clicked', 'pass');
+                } else {
+                    logResult('❌ Sign In link not found', 'fail');
+                }
+            }, 100);
+        }
+
+        function testFormValidation() {
+            logResult('Testing form validation...', 'info');
+
+            // Test signup form
+            const signupForm = document.getElementById('signupFormElement');
+            if (signupForm) {
+                // Try to submit empty form
+                signupForm.dispatchEvent(new Event('submit'));
+                logResult('✅ Signup form validation triggered', 'pass');
+            } else {
+                logResult('❌ Signup form not found', 'fail');
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            logResult('Test results cleared', 'info');
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            logResult('Page loaded - checking for required elements...', 'info');
+
+            const elements = ['enterBtn', 'showSignup', 'showSignin', 'signinForm', 'signupForm'];
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    logResult(`✅ Element '${id}' found`, 'pass');
+                } else {
+                    logResult(`❌ Element '${id}' not found`, 'fail');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

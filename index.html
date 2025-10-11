@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" oncontextmenu="return false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BLACKHOLE Cloud Storage provides secure, end-to-end encrypted file storage, sharing, and streaming for your personal and professional data.">
+    <meta name="keywords" content="BLACKHOLE, cloud storage, secure file sharing, encrypted storage, file upload, private cloud">
+    <meta name="robots" content="index, follow">
+    <title>BLACKHOLE Cloud Storage</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Welcome Dialog -->
+    <div id="welcomeDialog" class="dialog-overlay" tabindex="0">
+        <div class="dialog-content">
+            <h1> BLACKHOLE</h1>
+            <p>Your secure cloud storage solution</p>
+            <button id="enterBtn" class="btn-primary">Enter</button>
+        </div>
+    </div>
+
+    <!-- Authentication Section -->
+    <div id="authSection" class="auth-container" style="display: none;">
+        <!-- Sign In Form -->
+        <div id="signinForm" class="auth-form">
+            <h2> BLACKHOLE</h2>
+            <form id="signinFormElement">
+                <div class="form-group">
+                    <label for="signinUsername">Username</label>
+                    <input type="text" id="signinUsername" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signinPassword">Password</label>
+                    <input type="password" id="signinPassword" name="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+                <p class="auth-toggle">Don't have an account? <span id="showSignup">Sign Up</span></p>
+            </form>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div id="signupForm" class="auth-form">
+            <h2>BLACKHOLE ACCOUNT</h2>
+            <form id="signupFormElement">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password (min 8 characters)</label>
+                    <input type="password" id="signupPassword" name="password" required minlength="8">
+                </div>
+                <button type="submit" class="btn-primary">Sign Up</button>
+                <p class="auth-toggle">Already have an account? <span id="showSignin">Sign In</span></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <header class="dashboard-header">
+            <h1>BLACKHOLE</h1>
+            <button id="logoutBtn" class="btn-secondary">Logout</button>
+        </header>
+
+        <main class="dashboard-main">
+            <div class="upload-section">
+                <h2>Upload Files</h2>
+                <div class="upload-area" id="uploadArea">
+                    <p>Drag & drop files here or click to browse</p>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+            </div>
+
+            <div class="files-section">
+                <div class="files-header">
+                    <h2>Your Files</h2>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search files..." class="search-input">
+                        <select id="filterType" class="filter-select">
+                            <option value="">All Types</option>
+                            <option value="image/">Images</option>
+                            <option value="video/">Videos</option>
+                            <option value="audio/">Audio</option>
+                            <option value="text/">Documents</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="filesList" class="files-list">
+                    <!-- Files will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Video Player -->
+            <div id="videoPlayer" class="video-player" style="display: none;">
+                <div class="video-container">
+                    <video id="videoElement" controls>
+                        Your browser does not support the video tag.
+                    </video>
+                    <button id="closeVideo" class="btn-close">×</button>
+                    <button id="fullscreenBtn" class="btn-fullscreen">⛶</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer" class="footer" style="display: none;">
+        <p>&copy; 2024 BLACKHOLE Cloud Storage. All rights reserved.</p>
+        <p>End-to-end encrypted • Secure • Private</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

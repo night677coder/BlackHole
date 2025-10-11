@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="horizon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0b0d17"/>
+      <stop offset="45%" stop-color="#111e3b"/>
+      <stop offset="75%" stop-color="#1f3a68"/>
+      <stop offset="100%" stop-color="#324d7d"/>
+    </radialGradient>
+    <linearGradient id="accretion" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffb347"/>
+      <stop offset="50%" stop-color="#f45c43"/>
+      <stop offset="100%" stop-color="#9f2bc1"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#03040a"/>
+  <circle cx="32" cy="32" r="24" fill="url(#accretion)" opacity="0.65" transform="rotate(18 32 32)"/>
+  <circle cx="32" cy="32" r="20" fill="url(#accretion)" opacity="0.45" transform="rotate(-22 32 32)"/>
+  <ellipse cx="32" cy="32" rx="18" ry="10" fill="url(#accretion)" opacity="0.75" transform="rotate(35 32 32)"/>
+  <circle cx="32" cy="32" r="12" fill="url(#horizon)"/>
+  <circle cx="32" cy="32" r="9" fill="#020308"/>
+  <circle cx="32" cy="32" r="4" fill="#010103" opacity="0.7"/>
+</svg>

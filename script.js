@@ -3,7 +3,7 @@
 // - Store encrypted blobs in IndexedDB instead of localStorage base64
 
 // Backend for non-expiring encrypted share links (mode B)
-const SHARE_SERVER_DEFAULT = 'http://127.0.0.1:3000'; // default; we will auto-resolve at runtime
+const SHARE_SERVER_DEFAULT = 'https://blackhole-jkby.onrender.com'; // default; we will auto-resolve at runtime
 let SHARE_SERVER_RESOLVED = null;
 
     class BlackholeStorage {
@@ -35,7 +35,8 @@ let SHARE_SERVER_RESOLVED = null;
         const candidates = [
             SHARE_SERVER_DEFAULT,
             'http://127.0.0.1:3000',
-            'http://localhost:3000'
+            'http://localhost:3000',
+            'https://blackhole-jkby.onrender.com'
         ];
         for (const base of candidates) {
             try {
@@ -46,7 +47,7 @@ let SHARE_SERVER_RESOLVED = null;
                 }
             } catch {}
         }
-        throw new Error('Share server not reachable. Make sure it is running on port 3000.');
+        throw new Error('Share server not reachable. Make sure it is running on port 3000 or check your deployment.');
     }
 
     // IndexedDB Helpers

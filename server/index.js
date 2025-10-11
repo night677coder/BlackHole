@@ -49,7 +49,7 @@ function generateId(len = 32) {
 app.post('/api/upload', upload.single('file'), (req, res) => {
   try {
     const id = path.basename(req.file.filename);
-    const baseUrl = 'https://blackhole-jkby.onrender.com';
+    const baseUrl = 'https://blackhole-7muz.onrender.com';
     const url = `${baseUrl}/d/${id}`;
     res.json({ id, url });
   } catch (e) {
@@ -250,7 +250,7 @@ app.post('/api/upload/complete/:id', (req, res) => {
   try {
     if (!fs.existsSync(tmp)) return res.status(404).json({ error: 'no_tmp' });
     fs.renameSync(tmp, finalPath);
-    const baseUrl = 'https://blackhole-jkby.onrender.com';
+    const baseUrl = 'https://blackhole-7muz.onrender.com';
     const url = `${baseUrl}/d/${id}`;
     res.json({ id, url });
   } catch (e) {

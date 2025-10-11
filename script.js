@@ -3,7 +3,7 @@
 // - Store encrypted blobs in IndexedDB instead of localStorage base64
 
 // Backend for non-expiring encrypted share links (mode B)
-const SHARE_SERVER_DEFAULT = 'https://blackhole-jkby.onrender.com'; // default; we will auto-resolve at runtime
+const SHARE_SERVER_DEFAULT = 'https://blackhole-7muz.onrender.com'; // default; we will auto-resolve at runtime
 let SHARE_SERVER_RESOLVED = null;
 
     class BlackholeStorage {

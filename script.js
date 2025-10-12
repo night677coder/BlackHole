@@ -36,7 +36,7 @@ let SHARE_SERVER_RESOLVED = null;
             SHARE_SERVER_DEFAULT,
             'http://127.0.0.1:3000',
             'http://localhost:3000',
-            'https://blackhole-jkby.onrender.com'
+            'https://blackhole-7muz.onrender.com/'
         ];
         for (const base of candidates) {
             try {
